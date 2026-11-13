@@ -1,4 +1,4 @@
-import { BaseAccessory } from './base';
+import { BaseAccessory } from './base.js';
 
 export class LumiAirerAcn02 extends BaseAccessory {
   init() {
