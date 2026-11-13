@@ -1,4 +1,4 @@
-import { BaseAccessory } from './base';
+import { BaseAccessory } from './base.js';
 
 export class VirtualIrTv extends BaseAccessory {
   get did() {

@@ -1,10 +1,11 @@
-import axios, { AxiosInstance } from 'axios';
+import axios from 'axios';
+import type { AxiosInstance } from 'axios';
 import { createHash } from 'crypto';
 import path from 'path';
 import fs from 'fs';
-import { Logger } from 'homebridge/lib/logger';
+import type { Logger } from 'homebridge';
 import { BatchRequestManager } from 'batch-request-manager';
-import { API_DOMAIN } from './constants';
+import { API_DOMAIN } from './constants.js';
 import { inspect } from 'util';
 
 export interface AqaraApiOption extends Aqara.AppConfig {
@@ -16,7 +17,6 @@ export interface AqaraApiOption extends Aqara.AppConfig {
 export class AqaraApi {
   axios!: AxiosInstance;
 
-  logger = new Logger('AqaraApi');
 
   get configPath() {
     const { storagePath, account } = this.option;
@@ -52,7 +52,7 @@ export class AqaraApi {
 
   retry = false;
 
-  constructor(private option: AqaraApiOption) {
+  constructor(private option: AqaraApiOption, private logger: Logger) {
     const { region, appId, keyId } = option;
     this.axios = axios.create({
       baseURL: `https://${API_DOMAIN[region]}`,

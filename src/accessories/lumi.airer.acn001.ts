@@ -1,4 +1,4 @@
-import { BaseAccessory } from './base';
+import { BaseAccessory } from './base.js';
 
 enum Operation {
   Lightbulb = '4.21.85',
