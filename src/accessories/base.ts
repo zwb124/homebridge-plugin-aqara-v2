@@ -1,5 +1,5 @@
 import type { Service } from 'homebridge';
-import type { AqaraHomebridgePlatform } from '../platform';
+import type { AqaraHomebridgePlatform } from '../platform.js';
 
 type GenerateServicesParams =
   | typeof Service
