@@ -1,8 +1,8 @@
 import { API, Characteristic, DynamicPlatformPlugin, Logger, PlatformConfig, Service } from 'homebridge';
 
-import { LumiAirerAcn001, LumiAirerAcn02, VirtualIrTv } from './accessories';
-import { AqaraApi, AqaraApiOption } from './api';
-import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
+import { LumiAirerAcn001, LumiAirerAcn02, VirtualIrTv } from './accessories/index.js';
+import { AqaraApi, AqaraApiOption } from './api/index.js';
+import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
 
 interface AqaraPlatformConfig extends PlatformConfig, AqaraApiOption {
   positionId?: string;
@@ -28,7 +28,7 @@ export class AqaraHomebridgePlatform implements DynamicPlatformPlugin {
       });
       this.api.on('didFinishLaunching', () => {
         this.tokenRefreshTimer = setInterval(() => {
-          this.aqaraApi.refreshToken();
+          void this.aqaraApi.refreshToken().catch((error) => this.log.error('Failed to refresh Aqara token:', error));
         }, 1000 * 60 * 60 * 24 * 7);
 
         this.discoverDevices();
@@ -36,7 +36,7 @@ export class AqaraHomebridgePlatform implements DynamicPlatformPlugin {
 
       this.api.on('shutdown', () => {
         if (this.tokenRefreshTimer) {
-          clearTimeout(this.tokenRefreshTimer);
+          clearInterval(this.tokenRefreshTimer);
         }
       });
     } else {
@@ -53,7 +53,6 @@ export class AqaraHomebridgePlatform implements DynamicPlatformPlugin {
     // this.aqaraApi.request('query.ir.info', { did: 'ir.1235995976809168896' }).then(console.log);
     // this.aqaraApi.request('query.ir.keys', { did: 'ir.1235995976809168896' }).then(console.log);
     this.aqaraApi.getAllDevices(this.config.positionId).then((devices) => {
-      console.log('devices', devices);
       devices.forEach((device) => this.handleDevice(device));
     });
   }
