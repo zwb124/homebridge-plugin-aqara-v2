@@ -1,10 +1,11 @@
-import axios, { AxiosInstance } from 'axios';
+import axios from 'axios';
+import type { AxiosInstance } from 'axios';
 import { createHash } from 'crypto';
 import path from 'path';
 import fs from 'fs';
-import { Logger } from 'homebridge/lib/logger';
+import { Logger } from 'homebridge';
 import { BatchRequestManager } from 'batch-request-manager';
-import { API_DOMAIN } from './constants';
+import { API_DOMAIN } from './constants.js';
 import { inspect } from 'util';
 
 export interface AqaraApiOption extends Aqara.AppConfig {
