@@ -25,7 +25,7 @@ export class AqaraHomebridgePlatform implements DynamicPlatformPlugin {
       this.aqaraApi = new AqaraApi({
         ...this.config,
         storagePath: this.api.user.storagePath(),
-      });
+      }, this.log);
       this.api.on('didFinishLaunching', () => {
         this.tokenRefreshTimer = setInterval(() => {
           void this.aqaraApi.refreshToken().catch((error) => this.log.error('Failed to refresh Aqara token:', error));
