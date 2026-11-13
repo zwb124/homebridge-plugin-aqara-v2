@@ -52,7 +52,7 @@ export class AqaraApi {
 
   retry = false;
 
-  constructor(private option: AqaraApiOption, private logger: Logger) {
+  constructor(private option: AqaraApiOption, private logger: Logger = console as unknown as Logger) {
     const { region, appId, keyId } = option;
     this.axios = axios.create({
       baseURL: `https://${API_DOMAIN[region]}`,
