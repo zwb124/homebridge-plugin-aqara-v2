@@ -22,7 +22,9 @@
     "build:ui": "modern build"
   },
   "keywords": [
-    "homebridge-plugin"
+    "homebridge-plugin",
+    "homebridge",
+    "aqara"
   ],
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
