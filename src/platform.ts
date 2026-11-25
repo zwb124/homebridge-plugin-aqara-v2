@@ -1,4 +1,4 @@
-import { API, Characteristic, DynamicPlatformPlugin, Logger, PlatformConfig, Service } from 'homebridge';
+import { API, Characteristic, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service } from 'homebridge';
 
 import { LumiAirerAcn001, LumiAirerAcn02, VirtualIrTv } from './accessories/index.js';
 import { AqaraApi, AqaraApiOption } from './api/index.js';
@@ -44,9 +44,16 @@ export class AqaraHomebridgePlatform implements DynamicPlatformPlugin {
     }
   }
 
-  configureAccessory(accessory: AqaraPlatformAccessory) {
-    this.log.info('Loading accessory from cache:', accessory.displayName);
-    this.accessories.push(accessory);
+  configureAccessory(accessory: PlatformAccessory) {
+    const context = accessory.context as Partial<AqaraPlatformAccessoryContext>;
+    if (!context.deviceInfo) {
+      this.log.warn('Skipping cached accessory with missing Aqara device information:', accessory.displayName);
+      return;
+    }
+
+    const aqaraAccessory = accessory as AqaraPlatformAccessory;
+    this.log.info('Loading accessory from cache:', aqaraAccessory.displayName);
+    this.accessories.push(aqaraAccessory);
   }
 
   discoverDevices() {
