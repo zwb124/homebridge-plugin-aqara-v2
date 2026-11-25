@@ -1,7 +1,7 @@
 {
   "name": "homebridge-plugin-aqara-v2",
   "displayName": "Aqara",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Aqara Homebridge plugin compatible with Homebridge v2.",
   "license": "Apache-2.0",
   "repository": {
@@ -19,7 +19,8 @@
   "scripts": {
     "watch": "npm run build && npm link && nodemon",
     "build": "rimraf ./dist && tsc && npm run build:ui",
-    "build:ui": "modern build"
+    "build:ui": "modern build && npm run build:ui-server",
+    "build:ui-server": "node scripts/build-ui-server.mjs"
   },
   "keywords": [
     "homebridge-plugin",
