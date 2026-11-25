@@ -1,31 +1,29 @@
-name: Release
+name: Publish to npm
 
 on:
-  pull_request:
-    branches: [main]
-    types: [closed]
   workflow_dispatch:
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
 
 jobs:
-  release:
-    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+  publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
-
-      - run: npm ci
-
+          node-version: 22.12.0
+          registry-url: https://registry.npmjs.org/
+      - run: npm install --no-audit --no-fund
       - run: npm run build
-
-      - uses: changesets/action@v1
-        with:
-          publish: npm publish
+      - name: Verify package contents
+        run: npm pack --dry-run
+      - name: Publish package
+        run: npm publish --access public
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
