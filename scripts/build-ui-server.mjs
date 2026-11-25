@@ -1,42 +1,46 @@
-import { spawnSync } from 'node:child_process';
-import { readFile, rm, writeFile } from 'node:fs/promises';
-import path from 'node:path';
+import { readFile, writeFile } from 'node:fs/promises';
+import ts from 'typescript';
 
-const root = process.cwd();
-const buildDir = path.join(root, 'homebridge-ui', '.server-build');
-const tsc = path.join(root, 'node_modules', 'typescript', 'bin', 'tsc');
+const sourcePath = 'ui-src/server.ts';
+const outputPath = 'homebridge-ui/server.js';
+const source = await readFile(sourcePath, 'utf8');
 
-await rm(buildDir, { recursive: true, force: true });
-const result = spawnSync(process.execPath, [
-  tsc,
-  '--project', 'ui-src/tsconfig.json',
-  '--emitDeclarationOnly', 'false',
-  '--declaration', 'false',
-  '--module', 'NodeNext',
-  '--moduleResolution', 'NodeNext',
-  '--rootDir', '.',
-  '--outDir', buildDir,
-], { cwd: root, stdio: 'inherit' });
+const result = ts.transpileModule(source, {
+  compilerOptions: {
+    module: ts.ModuleKind.ESNext,
+    target: ts.ScriptTarget.ES2022,
+    esModuleInterop: true,
+    importsNotUsedAsValues: ts.ImportsNotUsedAsValues.Remove,
+  },
+  fileName: sourcePath,
+  reportDiagnostics: true,
+});
 
-if (result.error) throw result.error;
-if (result.status !== 0) {
-  throw new Error(`TypeScript UI server compilation failed (exit code: ${result.status})`);
+const errors = (result.diagnostics ?? []).filter(
+  (diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error,
+);
+if (errors.length) {
+  throw new Error(ts.formatDiagnosticsWithColorAndContext(errors, {
+    getCurrentDirectory: () => process.cwd(),
+    getCanonicalFileName: (fileName) => fileName,
+    getNewLine: () => '\n',
+  }));
 }
 
-const compiledPath = path.join(buildDir, 'ui-src', 'server.js');
-let source = await readFile(compiledPath, 'utf8');
-source = source.replace(/(['"])@api\/index\1/g, "'../dist/api/index.js'");
+const output = result.outputText.replace(
+  /(['"])@api\/index\1/g,
+  "'../dist/api/index.js'",
+);
 
-if (!source.includes("from '@homebridge/plugin-ui-utils'")) {
-  throw new Error('Compiled UI server is missing the @homebridge/plugin-ui-utils ESM import');
+if (!/from\s+['"]@homebridge\/plugin-ui-utils['"]/.test(output)) {
+  throw new Error('Generated UI server is missing the Homebridge UI utils ESM import');
 }
-if (!source.includes("from '../dist/api/index.js'")) {
-  throw new Error('Compiled UI server is missing the rewritten Aqara API import');
+if (!/from\s+['"]\.\.\/dist\/api\/index\.js['"]/.test(output)) {
+  throw new Error('Generated UI server is missing the built Aqara API ESM import');
 }
-if (source.includes('require(') || !source.includes('import ')) {
-  throw new Error('Compiled UI server is not valid ESM');
+if (/\brequire\s*\(/.test(output) || !/^import\s/m.test(output)) {
+  throw new Error('Generated UI server is not valid ESM');
 }
 
-await writeFile(path.join(root, 'homebridge-ui', 'server.js'), source);
-await rm(buildDir, { recursive: true, force: true });
+await writeFile(outputPath, output);
 console.log('Built homebridge-ui/server.js as ESM');
