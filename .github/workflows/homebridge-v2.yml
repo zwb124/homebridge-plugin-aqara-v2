@@ -23,5 +23,20 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm install --no-audit --no-fund
       - run: npm run build
-      - name: Verify npm package contents
-        run: npm pack --dry-run
+      - name: Verify packed UI server is ESM
+        shell: bash
+        run: |
+          set -euo pipefail
+          PACK_DIR="$(mktemp -d)"
+          npm pack --pack-destination "$PACK_DIR"
+          mkdir "$PACK_DIR/unpacked"
+          tar -xzf "$PACK_DIR"/*.tgz -C "$PACK_DIR/unpacked"
+          SERVER="$PACK_DIR/unpacked/package/homebridge-ui/server.js"
+          test -f "$SERVER"
+          node --check "$SERVER"
+          grep -Eq "from ['\"]@homebridge/plugin-ui-utils['\"]" "$SERVER"
+          grep -Eq "from ['\"]\.\./dist/api/index\.js['\"]" "$SERVER"
+          if grep -Eq 'require[[:space:]]*\(' "$SERVER"; then
+            echo "Packed UI server still contains CommonJS require()"
+            exit 1
+          fi
