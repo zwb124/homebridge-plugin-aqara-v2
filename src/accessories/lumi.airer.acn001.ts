@@ -25,7 +25,11 @@ export class LumiAirerAcn001 extends BaseAccessory {
       airer: WindowCovering,
       fan: {
         service: Fanv2,
-        subName: '风干/烘干',
+        subName: '风干',
+      },
+      dry: {
+        service: Fanv2,
+        subName: '烘干',
       },
       disinfection: {
         service: Switch,
@@ -51,27 +55,19 @@ export class LumiAirerAcn001 extends BaseAccessory {
       .getCharacteristic(this.platform.Characteristic.PositionState)
       .onGet(() => this.getResourceValue(Operation.Control).then(({ value }) => this.positionStateMap[value]));
 
+    // 风干和烘干使用不同的 Aqara 资源，分别控制，互不影响。
     this.services.fan
       .getCharacteristic(this.platform.Characteristic.Active)
-      .onGet(() =>
-        Promise.allSettled([this.getResourceValue(Operation.AirDry), this.getResourceValue(Operation.Dry)]).then(
-          ([airDry, dry]) => {
-            return (
-              (airDry.status === 'fulfilled' && airDry.value.value === OpenClose.Open) ||
-              (dry.status === 'fulfilled' && dry.value.value === OpenClose.Open)
-            );
-          },
-        ),
-      )
+      .onGet(() => this.getResourceValue(Operation.AirDry).then(({ value }) => value === OpenClose.Open))
       .onSet((value) => {
-        if (value) {
-          this.setResourceValue(Operation.AirDry, OpenClose.Open);
-        } else {
-          Promise.allSettled([
-            this.setResourceValue(Operation.AirDry, OpenClose.Close),
-            this.setResourceValue(Operation.Dry, OpenClose.Close),
-          ]);
-        }
+        this.setResourceValue(Operation.AirDry, value ? OpenClose.Open : OpenClose.Close);
+      });
+
+    this.services.dry
+      .getCharacteristic(this.platform.Characteristic.Active)
+      .onGet(() => this.getResourceValue(Operation.Dry).then(({ value }) => value === OpenClose.Open))
+      .onSet((value) => {
+        this.setResourceValue(Operation.Dry, value ? OpenClose.Open : OpenClose.Close);
       });
 
     this.services.disinfection
