@@ -9,8 +9,8 @@ interface AqaraPlatformConfig extends PlatformConfig, AqaraApiOption {
 }
 
 export class AqaraHomebridgePlatform implements DynamicPlatformPlugin {
-  public readonly Service: typeof Service = this.api.hap.Service;
-  public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
+  public readonly Service: typeof Service;
+  public readonly Characteristic: typeof Characteristic;
 
   public readonly aqaraApi!: AqaraApi;
 
@@ -19,6 +19,9 @@ export class AqaraHomebridgePlatform implements DynamicPlatformPlugin {
   private tokenRefreshTimer?: NodeJS.Timeout;
 
   constructor(public readonly log: Logger, public readonly config: AqaraPlatformConfig, public readonly api: API) {
+    this.Service = this.api.hap.Service;
+    this.Characteristic = this.api.hap.Characteristic;
+
     this.log.debug('Finished initializing platform:', this.config.name);
     const { account } = this.config;
     if (account) {
@@ -57,8 +60,6 @@ export class AqaraHomebridgePlatform implements DynamicPlatformPlugin {
   }
 
   discoverDevices() {
-    // this.aqaraApi.request('query.ir.info', { did: 'ir.1235995976809168896' }).then(console.log);
-    // this.aqaraApi.request('query.ir.keys', { did: 'ir.1235995976809168896' }).then(console.log);
     this.aqaraApi.getAllDevices(this.config.positionId).then((devices) => {
       devices.forEach((device) => this.handleDevice(device));
     });
